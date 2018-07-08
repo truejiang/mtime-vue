@@ -1,0 +1,1 @@
+export const BASE_URL = 'https://bird.ioliu.cn/v1'

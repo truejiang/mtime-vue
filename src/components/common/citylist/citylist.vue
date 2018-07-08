@@ -9,18 +9,31 @@
       <span class="title">当前城市</span>
       <span class="location">位置获取失败，请开启定位功能</span>
     </div>
+    <cube-index-list
+      :data="cityList"
+      @select="selectItem"
+      @title-click="clickTitle"></cube-index-list>
   </div>
 </template>
 
 <script>
 import tab from '../base/tab/tab'
 import { mapGetters } from 'vuex'
+import { getCityList } from '@/api/cityList'
 export default {
   data () {
     return {
-      title: '选择城市',
-      cityName: ''
+      title: '当前城市',
+      cityName: '',
+      cityList: ''
     }
+  },
+  created () {
+    getCityList().then((res) => {
+      if (res.status === 200) {
+        this.cityList = this._formatCityList(res.data.p)
+      }
+    })
   },
   computed: {
     ...mapGetters([
@@ -30,6 +43,49 @@ export default {
   methods: {
     close (hide) {
       console.log(hide)
+    },
+    _formatCityList (cityList) {
+      let listMap = new Map()
+      let eles = {}
+      let firstChar = ''
+      cityList.forEach((ele, index) => {
+        eles = {
+          name: ele.n,
+          value: ele.id,
+          pinyin: ele.pinyinShort,
+          pinyinFull: ele.pinyinFull
+        }
+        firstChar = ele.pinyinFull.charAt(0).toUpperCase()
+        if(index >= 11) {
+          if (!!listMap.has('★Hot City')) {
+            listMap.get('★Hot City').push(eles)
+          } else {
+            listMap.set('★Hot City', [].concat(eles))
+          }
+        }
+        if (listMap.has(firstChar)) {
+          listMap.get(firstChar).push(eles)
+        } else {
+          listMap.set(firstChar, [].concat(eles))
+        }
+      })
+      let arr = []
+      for (let [key, value] of listMap.entries()) {
+        arr.push({
+          name:key,
+          items: value
+        })
+      }
+      arr.sort((a, b) => {
+        return a.name.charCodeAt() - b.name.charCodeAt()
+      })
+      return arr
+    },
+    selectItem (item) {
+      console.log(item.name)
+    },
+    clickTitle (title) {
+      console.log(title)
     }
   },
   components: {
@@ -38,7 +94,9 @@ export default {
 }
 </script>
 
-<style scoped lang="stylus">
+<style lang="stylus">
+.cube-scroll-content
+  width 100%
 .citylist-wrapper
   width 100%
   height 100%
